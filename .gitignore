@@ -1,0 +1,4 @@
+node_modules/
+washi.db
+.env
+.DS_Store

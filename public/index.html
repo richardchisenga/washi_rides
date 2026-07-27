@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Washi Rides Pro</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    /* ----- RESET & BASE ----- */
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+    body { background: #F5F0FF; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 0 0 70px 0; }
+    #app { max-width: 420px; width: 100%; background: white; min-height: 100vh; box-shadow: 0 8px 30px rgba(106, 13, 173, 0.15); position: relative; padding-bottom: 70px; }
+    .app-header { background: #6A0DAD; padding: 16px 18px 12px; color: white; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+    .app-header h1 { font-size: 20px; font-weight: 700; letter-spacing: 0.5px; }
+    .app-header .badge { font-size: 10px; background: rgba(255, 255, 255, 0.2); padding: 3px 10px; border-radius: 20px; }
+    .page { display: none; padding: 16px 16px 20px; animation: fadeIn 0.25s ease; }
+    .page.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .bottom-nav { position: fixed; bottom: 0; max-width: 420px; width: 100%; background: white; display: flex; justify-content: space-around; padding: 8px 8px 12px; border-top: 2px solid #e8ddf5; z-index: 200; background: #faf7ff; }
+    .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 11px; color: #888; cursor: pointer; padding: 4px 12px; border-radius: 30px; transition: 0.2s; border: none; background: transparent; font-weight: 500; }
+    .nav-item.active { color: #6A0DAD; background: #ede4ff; }
+    .nav-item .nav-icon { font-size: 22px; line-height: 1; }
+    .section-title { font-size: 18px; font-weight: 600; color: #3A1A4A; margin-bottom: 12px; }
+    .purple-btn { background: #6A0DAD; color: white; border: none; padding: 12px 20px; border-radius: 40px; font-size: 15px; font-weight: 600; width: 100%; cursor: pointer; transition: 0.2s; text-align: center; }
+    .purple-btn:active { background: #4f0a82; }
+    .purple-btn.outline { background: transparent; border: 2px solid #6A0DAD; color: #6A0DAD; }
+    .purple-btn.outline:active { background: #f0e6ff; }
+    .purple-btn.green { background: #25D366; }
+    .purple-btn.green:active { background: #1da851; }
+    .dest-grid { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 14px; }
+    .dest-chip { background: #f0eaff; padding: 6px 14px; border-radius: 30px; font-size: 13px; color: #3A1A4A; border: 1px solid #d9c4f0; cursor: pointer; transition: 0.2s; }
+    .dest-chip:active, .dest-chip.active { background: #d9c4f0; border-color: #6A0DAD; }
+    .input-group { margin: 10px 0; }
+    .input-group label { display: block; font-size: 13px; font-weight: 500; color: #3A1A4A; margin-bottom: 4px; }
+    .input-group input, .input-group select { width: 100%; padding: 10px 14px; border: 2px solid #d9c4f0; border-radius: 30px; font-size: 14px; background: white; }
+    .input-group input:focus, .input-group select:focus { outline: none; border-color: #6A0DAD; }
+    .route-banner { background: #f0eaff; padding: 8px 14px; border-radius: 30px; margin-bottom: 14px; text-align: center; font-weight: 600; color: #3A1A4A; font-size: 14px; }
+    .card { background: #faf7ff; border-radius: 16px; padding: 14px; margin-bottom: 12px; border: 1px solid #e8ddf5; }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+    .mt-12 { margin-top: 12px; }
+    .mt-16 { margin-top: 16px; }
+    .text-center { text-align: center; }
+    .text-muted { color: #777; font-size: 13px; }
+    .badge-status { font-size: 12px; padding: 2px 10px; border-radius: 20px; background: #e8f5e9; color: #2b7a3e; }
+    .badge-status.blocked { background: #fce4ec; color: #c62828; }
+    .badge-status.pending { background: #fff3e0; color: #e65100; }
+    .map-container { height: 340px; border-radius: 16px; overflow: hidden; border: 2px solid #e8ddf5; margin: 10px 0; }
+    .payment-modal { background: white; border-radius: 24px; padding: 20px; margin-top: 10px; border: 1px solid #d9c4f0; }
+    .plan-card { background: #faf7ff; border: 2px solid #e8ddf5; border-radius: 16px; padding: 14px; margin-bottom: 10px; cursor: pointer; transition: 0.2s; }
+    .plan-card.active { border-color: #6A0DAD; background: #ede4ff; }
+    .plan-card .price { font-size: 20px; font-weight: 700; color: #6A0DAD; }
+    .admin-table { width: 100%; font-size: 13px; border-collapse: collapse; }
+    .admin-table th { text-align: left; padding: 6px 4px; color: #555; border-bottom: 1px solid #e8ddf5; }
+    .admin-table td { padding: 8px 4px; border-bottom: 1px solid #f0f0f0; }
+    .small-btn { padding: 4px 12px; border-radius: 30px; border: none; font-size: 12px; font-weight: 600; cursor: pointer; background: #6A0DAD; color: white; }
+    .small-btn.danger { background: #d32f2f; }
+    .small-btn.success { background: #2b7a3e; }
+    .small-btn.outline { background: transparent; border: 1px solid #6A0DAD; color: #6A0DAD; }
+    .auth-section { padding: 30px 20px; }
+    .auth-section h2 { margin-bottom: 16px; color: #3A1A4A; }
+    .auth-section .input-group { margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <header class="app-header">
+    <h1>🚗 Washi Rides</h1>
+    <span class="badge">Pro v2.0</span>
+  </header>
+
+  <!-- Auth -->
+  <div id="auth-section" class="page active">
+    <div class="auth-section">
+      <h2>Welcome to Washi</h2>
+      <p class="text-muted">Login or create an account</p>
+      <div class="input-group">
+        <label>Phone Number</label>
+        <input type="tel" id="authPhone" placeholder="0977123456" />
+      </div>
+      <div class="input-group">
+        <label>Password</label>
+        <input type="password" id="authPassword" placeholder="••••••••" />
+      </div>
+      <div style="display:flex; gap:8px; margin:16px 0;">
+        <button class="purple-btn" id="loginBtn" style="flex:1;">Login</button>
+        <button class="purple-btn outline" id="registerBtn" style="flex:1;">Register</button>
+      </div>
+      <div id="authMessage" class="text-center text-muted"></div>
+    </div>
+  </div>
+
+  <!-- Main app -->
+  <div id="main-app" style="display:none;">
+    <!-- Home -->
+    <div id="page-home" class="page active">
+      <h2 class="section-title">📌 Book a Ride</h2>
+      <p class="text-muted">Quick Book Shortcuts</p>
+      <div class="dest-grid" id="destGrid"></div>
+      <div class="input-group">
+        <label>📍 Enter your pickup point</label>
+        <input type="text" id="pickupInput" placeholder="e.g. Tabora Market" />
+      </div>
+      <button class="purple-btn" id="proceedBtn">➡ Proceed</button>
+      <div class="text-muted text-center mt-12" style="font-size:12px;">Tap a destination to pre‑fill</div>
+      <div class="card mt-16" style="background:#ede4ff; border-color:#6A0DAD;">
+        <div class="flex-between">
+          <span style="font-weight:600;">🌟 Subscribe & Save</span>
+          <button class="small-btn" id="goToSubsBtn">View Plans</button>
+        </div>
+        <span class="text-muted" style="font-size:12px;">Get unlimited rides for a week at K50 only!</span>
+      </div>
+      <div id="myRidesList" class="mt-16">
+        <h3 class="section-title" style="font-size:16px;">My Recent Rides</h3>
+        <div id="ridesContainer"><div class="text-muted">No rides yet.</div></div>
+      </div>
+    </div>
+
+    <!-- Riders -->
+    <div id="page-riders" class="page">
+      <h2 class="section-title">👤 Choose Your Rider</h2>
+      <div class="route-banner" id="routeDisplay">Tabora → Miselo Guesthouse</div>
+      <div id="riderList"></div>
+      <button class="purple-btn outline mt-16" id="backToHomeBtn">← Back</button>
+    </div>
+
+    <!-- Payment -->
+    <div id="page-payment" class="page">
+      <h2 class="section-title">💳 Mobile Money Payment</h2>
+      <div class="route-banner" id="paymentRoute">Tabora → Miselo</div>
+      <div class="payment-modal">
+        <div class="input-group">
+          <label>Network</label>
+          <select id="networkSelect">
+            <option value="MTN">MTN Mobile Money</option>
+            <option value="Airtel">Airtel Money</option>
+            <option value="Zamtel">Zamtel Kwacha</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>Phone Number</label>
+          <input type="tel" id="phoneInput" placeholder="0977123456" />
+        </div>
+        <div class="input-group">
+          <label>Amount (K)</label>
+          <input type="number" id="amountInput" placeholder="15.00" />
+        </div>
+        <button class="purple-btn green" id="payNowBtn">💸 Confirm Payment</button>
+        <button class="purple-btn outline mt-12" id="cancelPaymentBtn">Cancel</button>
+      </div>
+      <div id="paymentStatus" class="text-center mt-12" style="font-weight:600;"></div>
+    </div>
+
+    <!-- Tracking -->
+    <div id="page-tracking" class="page">
+      <h2 class="section-title">🗺️ Live Tracking</h2>
+      <div class="route-banner" id="trackingRoute">Ride in progress...</div>
+      <div class="map-container" id="trackingMapContainer"></div>
+      <div class="flex-between" style="margin-top:6px;">
+        <span id="trackingStatus" style="font-weight:600; color:#2b7a3e;">● Driver is on the way</span>
+        <span id="etaDisplay" style="color:#6A0DAD; font-weight:600;">ETA: 3 min</span>
+      </div>
+      <button class="purple-btn outline mt-16" id="endRideBtn">🏁 End Ride</button>
+    </div>
+
+    <!-- Driver Register -->
+    <div id="page-register" class="page">
+      <h2 class="section-title">🧑‍✈️ Become a Driver</h2>
+      <p class="text-muted">Register to start earning with Washi.</p>
+      <div class="input-group">
+        <label>Full Name</label>
+        <input type="text" id="driverName" placeholder="John Doe" />
+      </div>
+      <div class="input-group">
+        <label>Phone Number</label>
+        <input type="tel" id="driverPhone" placeholder="0977123456" />
+      </div>
+      <div class="input-group">
+        <label>Bike Model</label>
+        <input type="text" id="driverBike" placeholder="Bajaj Boxer" />
+      </div>
+      <div class="input-group">
+        <label>Plate Number</label>
+        <input type="text" id="driverPlate" placeholder="ABC 123" />
+      </div>
+      <div class="input-group">
+        <label>License Number</label>
+        <input type="text" id="driverLicense" placeholder="LIC-12345" />
+      </div>
+      <button class="purple-btn" id="registerDriverBtn">✅ Register</button>
+      <div id="registerStatus" class="text-center mt-12 text-muted"></div>
+    </div>
+
+    <!-- Subscription -->
+    <div id="page-subscription" class="page">
+      <h2 class="section-title">🌟 Subscription Plans</h2>
+      <p class="text-muted">Subscribe for unlimited rides & priority booking.</p>
+      <div id="planList"></div>
+      <div id="subStatus" class="text-center mt-12 text-muted"></div>
+      <button class="purple-btn outline mt-16" id="backFromSubBtn">← Back</button>
+    </div>
+
+    <!-- Admin -->
+    <div id="page-admin" class="page">
+      <h2 class="section-title">⚙️ Admin Dashboard</h2>
+      <div style="display:flex; gap:8px; margin-bottom:14px;">
+        <div class="card" style="flex:1; text-align:center;">
+          <div style="font-size:22px; font-weight:700; color:#6A0DAD;" id="adminTotalRiders">0</div>
+          <div class="text-muted">Riders</div>
+        </div>
+        <div class="card" style="flex:1; text-align:center;">
+          <div style="font-size:22px; font-weight:700; color:#6A0DAD;" id="adminTotalBikes">0</div>
+          <div class="text-muted">Bikes</div>
+        </div>
+        <div class="card" style="flex:1; text-align:center;">
+          <div style="font-size:22px; font-weight:700; color:#6A0DAD;" id="adminSubs">0</div>
+          <div class="text-muted">Subscribers</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; margin-bottom:12px;">
+        <button class="small-btn" id="adminRidersTab" style="flex:1; background:#6A0DAD;">Riders</button>
+        <button class="small-btn outline" id="adminBikesTab" style="flex:1;">Bikes</button>
+      </div>
+      <div id="adminRidersPanel">
+        <h4 style="margin-bottom:6px;">Registered Drivers</h4>
+        <div id="adminRiderList"></div>
+      </div>
+      <div id="adminBikesPanel" style="display:none;">
+        <h4 style="margin-bottom:6px;">Manage Bikes</h4>
+        <div style="display:flex; gap:6px; margin-bottom:10px;">
+          <input type="text" id="newBikeInput" placeholder="Bike model" style="flex:1; padding:8px; border-radius:30px; border:1px solid #d9c4f0;" />
+          <button class="small-btn" id="addBikeBtn">Add</button>
+        </div>
+        <div id="adminBikeList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav" id="bottomNav" style="display:none;">
+    <button class="nav-item active" data-page="page-home"><span class="nav-icon">🏠</span> Home</button>
+    <button class="nav-item" data-page="page-tracking"><span class="nav-icon">🗺️</span> Track</button>
+    <button class="nav-item" data-page="page-register"><span class="nav-icon">🚗</span> Register</button>
+    <button class="nav-item" data-page="page-subscription"><span class="nav-icon">🌟</span> Subscribe</button>
+    <button class="nav-item" data-page="page-admin"><span class="nav-icon">⚙️</span> Admin</button>
+  </nav>
+</div>
+
+<script>
+  // ========================== CONFIG =============================
+  // 👇 CHANGE THIS NUMBER TO YOUR WHATSAPP NUMBER
+  const WHATSAPP_NUMBER = '+260976638676';
+
+  const API_BASE = '/api';
+
+  // ========================== STATE ==============================
+  let token = localStorage.getItem('token') || null;
+  let user = JSON.parse(localStorage.getItem('user') || 'null');
+  let currentDestination = '';
+  let currentPickup = '';
+  let selectedRider = null;
+  let currentRideId = null;
+  let mapInstance = null, userMarker = null, driverMarker = null;
+  let trackingInterval = null, rideActive = false;
+  let driverLat = -12.0, driverLng = 28.5, userLat = -12.0, userLng = 28.5;
+  const DESTINATIONS = [
+    'Tabora Market', 'CGC Area', 'Downtown', 'Loloma Mission Hospital',
+    'Manyinga Mini Hospital', 'Muzama', 'Masumba', 'Mundanya',
+    'Airport', 'Manyinga Town Council', 'Elders Joint Pub', 'Miselo Guesthouse'
+  ];
+
+  // ========================== API HELPER =========================
+  async function apiFetch(endpoint, options = {}) {
+    const headers = { 'Content-Type': 'application/json', ...options.headers };
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    const res = await fetch(API_BASE + endpoint, { ...options, headers });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Request failed');
+    return data;
+  }
+
+  // ========================== AUTH ==============================
+  const authSection = document.getElementById('auth-section');
+  const mainApp = document.getElementById('main-app');
+  const bottomNav = document.getElementById('bottomNav');
+  const authPhone = document.getElementById('authPhone');
+  const authPassword = document.getElementById('authPassword');
+  const authMessage = document.getElementById('authMessage');
+
+  async function login(phone, password) {
+    try {
+      const data = await apiFetch('/auth/login', { method: 'POST', body: JSON.stringify({ phone, password }) });
+      token = data.token; user = data.user;
+      localStorage.setItem('token', token); localStorage.setItem('user', JSON.stringify(user));
+      afterLogin();
+    } catch (err) { authMessage.textContent = err.message; }
+  }
+
+  async function register(phone, password) {
+    try {
+      const data = await apiFetch('/auth/register', { method: 'POST', body: JSON.stringify({ phone, name: phone, password, role: 'rider' }) });
+      token = data.token; user = data.user;
+      localStorage.setItem('token', token); localStorage.setItem('user', JSON.stringify(user));
+      afterLogin();
+    } catch (err) { authMessage.textContent = err.message; }
+  }
+
+  document.getElementById('loginBtn').onclick = () => login(authPhone.value.trim(), authPassword.value.trim());
+  document.getElementById('registerBtn').onclick = () => register(authPhone.value.trim(), authPassword.value.trim());
+
+  function afterLogin() {
+    authSection.style.display = 'none';
+    mainApp.style.display = 'block';
+    bottomNav.style.display = 'flex';
+    initApp();
+  }
+
+  if (token && user) afterLogin();
+
+  // ========================== APP INIT ===========================
+  function initApp() {
+    renderDestinations(); loadMyRides(); loadSubscriptionStatus();
+    if (user.role === 'admin') renderAdmin();
+    checkDriverStatus();
+    showPage('page-home');
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const pageId = item.dataset.page;
+        if (pageId === 'page-tracking' && !rideActive) { alert('Start a ride first.'); return; }
+        showPage(pageId);
+        if (pageId === 'page-admin') renderAdmin();
+        if (pageId === 'page-subscription') renderPlans();
+        if (pageId === 'page-tracking' && mapInstance) setTimeout(() => mapInstance.invalidateSize(), 200);
+      });
+    });
+    document.getElementById('proceedBtn').onclick = proceedToRiders;
+    document.getElementById('goToSubsBtn').onclick = () => showPage('page-subscription');
+    document.getElementById('backToHomeBtn').onclick = () => showPage('page-home');
+    document.getElementById('cancelPaymentBtn').onclick = () => showPage('page-riders');
+    document.getElementById('backFromSubBtn').onclick = () => showPage('page-home');
+    document.getElementById('endRideBtn').onclick = endRide;
+    document.getElementById('registerDriverBtn').onclick = registerDriver;
+    document.getElementById('payNowBtn').onclick = processPayment;
+    document.getElementById('addBikeBtn').onclick = addBike;
+    document.getElementById('adminRidersTab').onclick = () => {
+      document.getElementById('adminRidersPanel').style.display = 'block';
+      document.getElementById('adminBikesPanel').style.display = 'none';
+      renderAdmin();
+    };
+    document.getElementById('adminBikesTab').onclick = () => {
+      document.getElementById('adminRidersPanel').style.display = 'none';
+      document.getElementById('adminBikesPanel').style.display = 'block';
+      renderAdmin();
+    };
+    // WhatsApp footer
+    const footer = document.createElement('div');
+    footer.className = 'text-center text-muted mt-16';
+    footer.style.padding = '10px 0';
+    footer.innerHTML = `<a href="https://wa.me/${WHATSAPP_NUMBER.replace(/\+/g, '')}" target="_blank" style="color:#6A0DAD; font-weight:600;">📱 Contact Support</a>`;
+    document.querySelector('#main-app').appendChild(footer);
+  }
+
+  // ========================== NAVIGATION ==========================
+  function showPage(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(pageId).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => { if (n.dataset.page === pageId) n.classList.add('active'); });
+  }
+
+  // ===================== HOME: DESTINATIONS & RIDES ==============
+  function renderDestinations() {
+    const grid = document.getElementById('destGrid');
+    grid.innerHTML = '';
+    DESTINATIONS.forEach(dest => {
+      const chip = document.createElement('span');
+      chip.className = 'dest-chip';
+      chip.textContent = dest;
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('.dest-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        currentDestination = dest;
+        document.getElementById('pickupInput').placeholder = `Pickup near ${dest}`;
+      });
+      grid.appendChild(chip);
+    });
+  }
+
+  async function loadMyRides() {
+    try {
+      const rides = await apiFetch('/rides/my');
+      const container = document.getElementById('ridesContainer');
+      if (rides.length === 0) { container.innerHTML = '<div class="text-muted">No rides yet.</div>'; return; }
+      container.innerHTML = rides.slice(0, 5).map(r =>
+        `<div class="card" style="padding:8px 12px; margin-bottom:6px;">
+          <div class="flex-between">
+            <span>${r.pickup} → ${r.destination}</span>
+            <span class="badge-status">${r.status}</span>
+          </div>
+          <div class="text-muted" style="font-size:12px;">${new Date(r.created_at).toLocaleString()}</div>
+        </div>`
+      ).join('');
+    } catch (e) { console.warn('Could not load rides:', e); }
+  }
+
+  // ===================== PROCEED TO RIDERS =======================
+  async function proceedToRiders() {
+    const pickup = document.getElementById('pickupInput').value.trim();
+    if (!pickup) { alert('Enter your pickup point.'); return; }
+    if (!currentDestination) { alert('Select a destination.'); return; }
+    currentPickup = pickup;
+    document.getElementById('routeDisplay').textContent = `${pickup} → ${currentDestination}`;
+    try {
+      const drivers = await apiFetch('/rides/available-drivers');
+      renderRiderList(drivers);
+      showPage('page-riders');
+    } catch (err) { alert('Could not fetch drivers: ' + err.message); }
+  }
+
+  function renderRiderList(drivers) {
+    const list = document.getElementById('riderList');
+    list.innerHTML = '';
+    if (drivers.length === 0) { list.innerHTML = '<div class="text-muted">No drivers available.</div>'; return; }
+    drivers.forEach(d => {
+      const card = document.createElement('div');
+      card.className = 'card flex-between';
+      card.innerHTML = `
+        <div>
+          <div style="font-weight:600;">${d.name}</div>
+          <div style="font-size:13px; color:#666;">${d.bike_model} · ${d.plate_number}</div>
+          <div style="font-size:12px; color:#2b7a3e;">● Online</div>
+        </div>
+        <button class="small-btn request-ride-btn" data-driver='${JSON.stringify(d)}'>Request</button>
+      `;
+      list.appendChild(card);
+    });
+    document.querySelectorAll('.request-ride-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const driver = JSON.parse(btn.dataset.driver);
+        selectedRider = driver;
+        createRideAndProceedToPayment(driver);
+      });
+    });
+  }
+
+  // ===================== CREATE RIDE & PAYMENT ===================
+  async function createRideAndProceedToPayment(driver) {
+    try {
+      const ride = await apiFetch('/rides', { method: 'POST', body: JSON.stringify({ pickup: currentPickup, destination: currentDestination }) });
+      currentRideId = ride.id;
+      await apiFetch(`/rides/${ride.id}/status`, { method: 'PATCH', body: JSON.stringify({ status: 'accepted' }) });
+      document.getElementById('paymentRoute').textContent = `${currentPickup} → ${currentDestination} | Driver: ${driver.name}`;
+      document.getElementById('amountInput').value = '15.00';
+      document.getElementById('paymentStatus').textContent = '';
+      showPage('page-payment');
+      window._pendingDriver = driver;
+    } catch (err) { alert('Error booking ride: ' + err.message); }
+  }
+
+  async function processPayment() {
+    const phone = document.getElementById('phoneInput').value.trim();
+    const amount = document.getElementById('amountInput').value.trim();
+    const network = document.getElementById('networkSelect').value;
+    if (!phone || phone.length < 9) {
+      document.getElementById('paymentStatus').textContent = '❌ Enter valid phone.';
+      document.getElementById('paymentStatus').style.color = '#c62828';
+      return;
+    }
+    if (!amount || parseFloat(amount) <= 0) {
+      document.getElementById('paymentStatus').textContent = '❌ Enter a valid amount.';
+      document.getElementById('paymentStatus').style.color = '#c62828';
+      return;
+    }
+    document.getElementById('paymentStatus').textContent = '⏳ Processing payment...';
+    document.getElementById('paymentStatus').style.color = '#6A0DAD';
+    try {
+      await apiFetch('/payments', { method: 'POST', body: JSON.stringify({ ride_id: currentRideId, amount: parseFloat(amount), network, phone, purpose: 'ride' }) });
+      await apiFetch(`/rides/${currentRideId}/status`, { method: 'PATCH', body: JSON.stringify({ status: 'in_progress' }) });
+      document.getElementById('paymentStatus').textContent = '✅ Payment Successful!';
+      document.getElementById('paymentStatus').style.color = '#2b7a3e';
+      startTrackingRide(currentPickup, currentDestination, window._pendingDriver || { name: 'Driver' });
+      loadMyRides();
+    } catch (err) {
+      document.getElementById('paymentStatus').textContent = '❌ Payment failed: ' + err.message;
+      document.getElementById('paymentStatus').style.color = '#c62828';
+    }
+  }
+
+  // ===================== LIVE TRACKING ===========================
+  let mapInitialized = false;
+  function initMap() {
+    if (mapInitialized) return;
+    mapInitialized = true;
+    mapInstance = L.map('trackingMapContainer').setView([-12.0, 28.5], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(mapInstance);
+    userMarker = L.marker([-12.0, 28.5], { icon: L.icon({ iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png', iconSize: [25, 41], iconAnchor: [12, 41] }) }).addTo(mapInstance).bindPopup('📍 You');
+    driverMarker = L.marker([-12.0, 28.5], { icon: L.icon({ iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png', iconSize: [25, 41], iconAnchor: [12, 41] }) }).addTo(mapInstance).bindPopup('🚗 Driver');
+    if (navigator.geolocation) {
+      navigator.geolocation.watchPosition(pos => {
+        userLat = pos.coords.latitude; userLng = pos.coords.longitude;
+        userMarker.setLatLng([userLat, userLng]);
+        if (mapInstance) mapInstance.setView([userLat, userLng], 14);
+      }, err => console.warn('Geolocation error', err), { enableHighAccuracy: true });
+    }
+  }
+
+  function startTrackingRide(pickup, dest, driver) {
+    rideActive = true;
+    document.getElementById('trackingRoute').textContent = `${pickup} → ${dest} | Driver: ${driver.name}`;
+    document.getElementById('trackingStatus').textContent = '🚗 Driver is heading to you...';
+    document.getElementById('etaDisplay').textContent = 'ETA: 3 min';
+    showPage('page-tracking');
+    if (!mapInitialized) initMap();
+    else mapInstance.setView([userLat || -12.0, userLng || 28.5], 14);
+    const startLat = (userLat || -12.0) + (Math.random() * 0.03) + 0.01;
+    const startLng = (userLng || 28.5) + (Math.random() * 0.03) + 0.01;
+    driverLat = startLat; driverLng = startLng;
+    driverMarker.setLatLng([driverLat, driverLng]);
+    let step = 0;
+    if (trackingInterval) clearInterval(trackingInterval);
+    trackingInterval = setInterval(() => {
+      step++;
+      const targetLat = userLat || -12.0, targetLng = userLng || 28.5;
+      const factor = Math.min(step * 0.04, 1);
+      const newLat = startLat + (targetLat - startLat) * factor;
+      const newLng = startLng + (targetLng - startLng) * factor;
+      driverMarker.setLatLng([newLat, newLng]);
+      const remaining = Math.max(0, Math.round((1 - factor) * 3));
+      document.getElementById('etaDisplay').textContent = `ETA: ${remaining} min`;
+      if (factor >= 1) {
+        clearInterval(trackingInterval);
+        document.getElementById('trackingStatus').textContent = '✅ Driver has arrived!';
+        document.getElementById('etaDisplay').textContent = 'Arrived';
+        rideActive = false;
+        apiFetch(`/rides/${currentRideId}/status`, { method: 'PATCH', body: JSON.stringify({ status: 'completed' }) })
+          .then(() => loadMyRides()).catch(console.warn);
+        alert('🚀 Your ride has arrived! Enjoy your trip.');
+      }
+    }, 1000);
+  }
+
+  function endRide() {
+    if (trackingInterval) clearInterval(trackingInterval);
+    rideActive = false;
+    document.getElementById('trackingStatus').textContent = 'Ride ended.';
+    document.getElementById('etaDisplay').textContent = '--';
+    if (currentRideId) {
+      apiFetch(`/rides/${currentRideId}/status`, { method: 'PATCH', body: JSON.stringify({ status: 'cancelled' }) })
+        .then(() => loadMyRides()).catch(console.warn);
+    }
+    showPage('page-home');
+    alert('Ride ended. Thank you for using Washi Rides!');
+  }
+
+  // ===================== DRIVER REGISTRATION =====================
+  async function registerDriver() {
+    const name = document.getElementById('driverName').value.trim();
+    const phone = document.getElementById('driverPhone').value.trim();
+    const bike = document.getElementById('driverBike').value.trim();
+    const plate = document.getElementById('driverPlate').value.trim();
+    const license = document.getElementById('driverLicense').value.trim();
+    if (!name || !phone || !bike || !plate || !license) {
+      document.getElementById('registerStatus').textContent = '❌ Please fill all fields.';
+      document.getElementById('registerStatus').style.color = '#c62828';
+      return;
+    }
+    try {
+      await apiFetch('/drivers/register', { method: 'POST', body: JSON.stringify({ bike_model: bike, plate_number: plate, license_number: license }) });
+      document.getElementById('registerStatus').textContent = '✅ Registration submitted for admin approval.';
+      document.getElementById('registerStatus').style.color = '#2b7a3e';
+      ['driverName','driverPhone','driverBike','driverPlate','driverLicense'].forEach(id => document.getElementById(id).value = '');
+    } catch (err) {
+      document.getElementById('registerStatus').textContent = '❌ ' + err.message;
+      document.getElementById('registerStatus').style.color = '#c62828';
+    }
+  }
+
+  async function checkDriverStatus() {
+    try {
+      const status = await apiFetch('/drivers/status');
+      if (status.registered) {
+        document.getElementById('registerStatus').textContent = `Driver status: ${status.status}`;
+        document.getElementById('registerStatus').style.color = status.status === 'approved' ? '#2b7a3e' : '#e65100';
+      }
+    } catch (e) { /* ignore */ }
+  }
+
+  // ===================== SUBSCRIPTION ============================
+  const PLANS = [
+    { name: 'Weekly', price: 50, days: 7 },
+    { name: 'Monthly', price: 150, days: 30 },
+    { name: 'Yearly', price: 500, days: 365 }
+  ];
+
+  async function loadSubscriptionStatus() {
+    try {
+      const sub = await apiFetch('/subscriptions/my');
+      if (sub) {
+        document.getElementById('subStatus').innerHTML = `✅ Active: ${sub.plan} until ${new Date(sub.expiry).toLocaleDateString()}`;
+        document.getElementById('subStatus').style.color = '#2b7a3e';
+      } else {
+        document.getElementById('subStatus').innerHTML = 'No active subscription. Subscribe below.';
+        document.getElementById('subStatus').style.color = '#777';
+      }
+    } catch (e) { /* ignore */ }
+  }
+
+  function renderPlans() {
+    const list = document.getElementById('planList');
+    list.innerHTML = '';
+    PLANS.forEach(plan => {
+      const div = document.createElement('div');
+      div.className = 'plan-card';
+      div.innerHTML = `
+        <div class="flex-between">
+          <div>
+            <div style="font-weight:600;">${plan.name}</div>
+            <div class="text-muted">${plan.days} days</div>
+          </div>
+          <div><span class="price">K${plan.price}</span></div>
+        </div>
+        <button class="small-btn subscribe-plan-btn" style="width:100%; margin-top:6px;" data-plan='${JSON.stringify(plan)}'>Subscribe</button>
+      `;
+      list.appendChild(div);
+    });
+    document.querySelectorAll('.subscribe-plan-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const plan = JSON.parse(btn.dataset.plan);
+        document.getElementById('paymentRoute').textContent = `Subscription: ${plan.name}`;
+        document.getElementById('amountInput').value = plan.price;
+        document.getElementById('paymentStatus').textContent = '';
+        document.getElementById('payNowBtn').onclick = async () => {
+          const phone = document.getElementById('phoneInput').value.trim();
+          if (!phone || phone.length < 9) {
+            document.getElementById('paymentStatus').textContent = '❌ Enter valid phone.';
+            document.getElementById('paymentStatus').style.color = '#c62828';
+            return;
+          }
+          try {
+            await apiFetch('/payments', { method: 'POST', body: JSON.stringify({ ride_id: null, amount: plan.price, network: document.getElementById('networkSelect').value, phone, purpose: 'subscription' }) });
+            await apiFetch('/subscriptions', { method: 'POST', body: JSON.stringify({ plan: plan.name, days: plan.days }) });
+            document.getElementById('paymentStatus').textContent = '✅ Subscription Active!';
+            document.getElementById('paymentStatus').style.color = '#2b7a3e';
+            loadSubscriptionStatus();
+            setTimeout(() => showPage('page-subscription'), 1500);
+          } catch (err) {
+            document.getElementById('paymentStatus').textContent = '❌ ' + err.message;
+            document.getElementById('paymentStatus').style.color = '#c62828';
+          }
+          document.getElementById('payNowBtn').onclick = processPayment;
+        };
+        showPage('page-payment');
+      });
+    });
+  }
+
+  // ===================== ADMIN ===================================
+  async function renderAdmin() {
+    if (user.role !== 'admin') {
+      document.getElementById('adminRiderList').innerHTML = '<div class="text-muted">Admin access required.</div>';
+      return;
+    }
+    try {
+      const stats = await apiFetch('/admin/stats');
+      document.getElementById('adminTotalRiders').textContent = stats.drivers;
+      document.getElementById('adminTotalBikes').textContent = stats.bikes;
+      document.getElementById('adminSubs').textContent = stats.subscriptions;
+
+      const drivers = await apiFetch('/admin/drivers');
+      const tbody = document.getElementById('adminRiderList');
+      if (drivers.length === 0) { tbody.innerHTML = '<div class="text-muted">No drivers registered.</div>'; }
+      else {
+        let html = `<table class="admin-table"><thead><tr><th>Name</th><th>Bike</th><th>Status</th><th>Action</th></tr></thead><tbody>`;
+        drivers.forEach(d => {
+          const statusClass = d.status === 'blocked' ? 'blocked' : d.status === 'pending' ? 'pending' : '';
+          html += `
+            <tr>
+              <td>${d.name}</td>
+              <td>${d.bike_model}</td>
+              <td><span class="badge-status ${statusClass}">${d.status}</span></td>
+              <td>
+                ${d.status === 'pending' ? `<button class="small-btn success admin-action" data-action="approve" data-id="${d.user_id}">Approve</button>` : ''}
+                ${d.status === 'approved' ? `<button class="small-btn danger admin-action" data-action="block" data-id="${d.user_id}">Block</button>` : ''}
+                ${d.status === 'blocked' ? `<button class="small-btn success admin-action" data-action="unblock" data-id="${d.user_id}">Unblock</button>` : ''}
+              </td>
+            </tr>
+          `;
+        });
+        html += '</tbody></table>';
+        tbody.innerHTML = html;
+        document.querySelectorAll('.admin-action').forEach(btn => {
+          btn.onclick = async () => {
+            const id = parseInt(btn.dataset.id);
+            const action = btn.dataset.action;
+            let status = '';
+            if (action === 'approve') status = 'approved';
+            else if (action === 'block') status = 'blocked';
+            else if (action === 'unblock') status = 'approved';
+            try {
+              await apiFetch(`/admin/drivers/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
+              renderAdmin();
+            } catch (err) { alert(err.message); }
+          };
+        });
+      }
+
+      const bikes = await apiFetch('/admin/bikes');
+      const bikeList = document.getElementById('adminBikeList');
+      if (bikes.length === 0) { bikeList.innerHTML = '<div class="text-muted">No bikes added.</div>'; }
+      else {
+        let html = `<ul style="list-style:none; padding:0;">`;
+        bikes.forEach(b => {
+          html += `
+            <li style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #f0f0f0;">
+              <span>${b.model}</span>
+              <button class="small-btn danger admin-remove-bike" data-id="${b.id}">Remove</button>
+            </li>
+          `;
+        });
+        html += '</ul>';
+        bikeList.innerHTML = html;
+        document.querySelectorAll('.admin-remove-bike').forEach(btn => {
+          btn.onclick = async () => {
+            const id = parseInt(btn.dataset.id);
+            try {
+              await apiFetch(`/admin/bikes/${id}`, { method: 'DELETE' });
+              renderAdmin();
+            } catch (err) { alert(err.message); }
+          };
+        });
+      }
+    } catch (err) { console.warn('Admin error:', err); }
+  }
+
+  async function addBike() {
+    const model = document.getElementById('newBikeInput').value.trim();
+    if (!model) return;
+    try {
+      await apiFetch('/admin/bikes', { method: 'POST', body: JSON.stringify({ model }) });
+      document.getElementById('newBikeInput').value = '';
+      renderAdmin();
+    } catch (err) { alert(err.message); }
+  }
+
+  // Prevent enter key on inputs
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.target.tagName === 'INPUT') e.preventDefault();
+  });
+</script>
+</body>
+</html>
