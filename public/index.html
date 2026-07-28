@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Washi Rides Pro</title>
 
-  <!-- Logo as favicon (your local logo) -->
-  <link rel="icon" href="/images/logo.png" type="image/png" />
+  <!-- ✅ FAVICON – your logo (raw GitHub URL for reliability) -->
+  <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/richardchisenga/washi_rides/master/public/images/logo.png" />
+  <link rel="shortcut icon" type="image/png" href="https://raw.githubusercontent.com/richardchisenga/washi_rides/master/public/images/logo.png" />
+
   <!-- PWA manifest (optional) -->
   <link rel="manifest" href="/manifest.json" />
 
@@ -78,14 +80,11 @@
 </head>
 <body>
 <div id="app">
-  <!-- HEADER with custom logo (local file) -->
+  <!-- HEADER with custom logo (raw GitHub URL) -->
   <header class="app-header">
     <h1>
-      <!-- ✅ Your local logo from public/images/logo.png -->
-      <img src="/images/logo.png" alt="Washi Rides" style="height: 32px; vertical-align: middle; margin-right: 8px;" 
-           onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
-      <!-- Fallback: if the logo fails to load, show this emoji (optional) -->
-      <span class="logo-fallback" style="display:none;">🏍️</span>
+      <!-- ✅ Logo from raw GitHub (reliable) -->
+      <img src="https://raw.githubusercontent.com/richardchisenga/washi_rides/master/public/images/logo.png" alt="Washi Rides" style="height: 32px; vertical-align: middle; margin-right: 8px;" />
       Washi Rides
     </h1>
     <span class="badge">Pro v2.0</span>
