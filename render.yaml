@@ -2,6 +2,7 @@ services:
   - type: web
     name: washi-rides
     env: node
+    nodeVersion: "18"          # ✅ Forces Node 18
     buildCommand: npm install
     startCommand: npm start
     envVars:
