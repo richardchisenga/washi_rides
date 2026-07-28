@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Washi Rides Pro</title>
 
-  <!-- Logo as favicon -->
-  <link rel="icon" href="https://i.imgur.com/NhGpBZa.png" type="image/png" />
+  <!-- Logo as favicon (your local logo) -->
+  <link rel="icon" href="/images/logo.png" type="image/png" />
   <!-- PWA manifest (optional) -->
   <link rel="manifest" href="/manifest.json" />
 
@@ -78,11 +78,14 @@
 </head>
 <body>
 <div id="app">
-  <!-- HEADER with custom logo (Imgur URL) -->
+  <!-- HEADER with custom logo (local file) -->
   <header class="app-header">
     <h1>
-      <!-- ✅ Logo from Imgur -->
-      <img src="https://i.imgur.com/NhGpBZa.png" alt="Washi Rides" style="height: 32px; vertical-align: middle; margin-right: 8px;" />
+      <!-- ✅ Your local logo from public/images/logo.png -->
+      <img src="/images/logo.png" alt="Washi Rides" style="height: 32px; vertical-align: middle; margin-right: 8px;" 
+           onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
+      <!-- Fallback: if the logo fails to load, show this emoji (optional) -->
+      <span class="logo-fallback" style="display:none;">🏍️</span>
       Washi Rides
     </h1>
     <span class="badge">Pro v2.0</span>
