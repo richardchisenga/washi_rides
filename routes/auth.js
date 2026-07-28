@@ -1,21 +1,21 @@
 // routes/auth.js
-const db = require("../lib/db");
+const { pool } = require("../lib/database");
 const { hashPassword, verifyPassword, sign } = require("../lib/auth");
 const { sendJson, readJsonBody, safe, requireAuth } = require("../lib/router");
 
 function publicRider(r) {
-  return { id: r.id, name: r.name, phone: r.phone, createdAt: r.createdAt };
+  return { id: r.id, name: r.name, phone: r.phone, created_at: r.created_at };
 }
 function publicDriver(d) {
   return {
     id: d.id,
     name: d.name,
     phone: d.phone,
-    licenseNumber: d.licenseNumber,
+    license_number: d.license_number,
     status: d.status,
     online: d.online,
-    bikeId: d.bikeId,
-    createdAt: d.createdAt,
+    bike_id: d.bike_id,
+    created_at: d.created_at,
   };
 }
 
@@ -35,26 +35,28 @@ function register(router) {
       if (password.length < 6) {
         return sendJson(res, 400, { error: "Password must be at least 6 characters." });
       }
-      if (db.findOne("riders", (r) => r.phone === phone)) {
+
+      // Check if already exists
+      const exists = await pool.query('SELECT id FROM riders WHERE phone = $1', [phone]);
+      if (exists.rows.length > 0) {
         return sendJson(res, 409, { error: "An account with this phone number already exists." });
       }
 
       const { salt, hash } = hashPassword(password);
-      const rider = {
-        id: `rider-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-        name,
-        phone,
-        passwordSalt: salt,
-        passwordHash: hash,
-        createdAt: new Date().toISOString(),
-      };
-      db.insert("riders", rider);
-      const token = sign({ sub: rider.id, role: "rider" });
-      return sendJson(res, 201, { token, user: publicRider(rider), role: "rider" });
+      const id = `rider-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      await pool.query(
+        `INSERT INTO riders (id, name, phone, password_salt, password_hash)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [id, name, phone, salt, hash]
+      );
+
+      const token = sign({ sub: id, role: "rider" });
+      const newRider = { id, name, phone };
+      return sendJson(res, 201, { token, user: newRider, role: "rider" });
     })
   );
 
-  // ---- Driver registration (goes to "pending" until admin approves) ----
+  // ---- Driver registration ----
   router.post(
     "/api/auth/register/driver",
     safe(async (req, res) => {
@@ -66,83 +68,81 @@ function register(router) {
       const bike = body.bike || {};
 
       if (!name || !phone || !password || !licenseNumber) {
-        return sendJson(res, 400, {
-          error: "Name, phone number, password and license number are all required.",
-        });
+        return sendJson(res, 400, { error: "Name, phone, password and license number are required." });
       }
       if (!bike.plate || !bike.model) {
         return sendJson(res, 400, { error: "Bike plate number and model are required." });
       }
-      if (db.findOne("drivers", (d) => d.phone === phone)) {
+
+      // Check if phone already used
+      const exists = await pool.query('SELECT id FROM drivers WHERE phone = $1', [phone]);
+      if (exists.rows.length > 0) {
         return sendJson(res, 409, { error: "An account with this phone number already exists." });
       }
 
       const { salt, hash } = hashPassword(password);
       const driverId = `driver-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      const bikeId = `bike-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
-      const bikeRecord = {
-        id: `bike-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-        plate: bike.plate.trim(),
-        model: bike.model.trim(),
-        color: (bike.color || "").trim(),
-        driverId,
-        status: "pending", // becomes "active" once the driver is approved
-        createdAt: new Date().toISOString(),
-      };
-      db.insert("bikes", bikeRecord);
+      // Insert bike
+      await pool.query(
+        `INSERT INTO bikes (id, plate, model, color, driver_id, status)
+         VALUES ($1, $2, $3, $4, $5, 'pending')`,
+        [bikeId, bike.plate.trim(), bike.model.trim(), (bike.color || "").trim(), driverId]
+      );
 
-      const driver = {
-        id: driverId,
-        name,
-        phone,
-        passwordSalt: salt,
-        passwordHash: hash,
-        licenseNumber,
-        bikeId: bikeRecord.id,
-        status: "pending", // pending | approved | rejected
-        online: false,
-        createdAt: new Date().toISOString(),
-      };
-      db.insert("drivers", driver);
+      // Insert driver
+      await pool.query(
+        `INSERT INTO drivers (id, name, phone, password_salt, password_hash,
+          license_number, bike_id, status, online)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', false)`,
+        [driverId, name, phone, salt, hash, licenseNumber, bikeId]
+      );
 
       return sendJson(res, 201, {
-        message: "Application submitted. An admin will review your details before you can go online.",
-        driver: publicDriver(driver),
+        message: "Application submitted. An admin will review your details.",
+        driver: { id: driverId, name, phone, license_number: licenseNumber, status: "pending", online: false },
       });
     })
   );
 
-  // ---- Unified login for riders, drivers and admins ----
+  // ---- Unified login ----
   router.post(
     "/api/auth/login",
     safe(async (req, res) => {
       const body = await readJsonBody(req);
       const phone = (body.phone || "").trim();
       const password = body.password || "";
-      const role = body.role; // "rider" | "driver" | "admin"
+      const role = body.role;
 
       if (!phone || !password || !role) {
-        return sendJson(res, 400, { error: "Phone number, password and role are required." });
+        return sendJson(res, 400, { error: "Phone, password and role are required." });
       }
 
-      const table = role === "admin" ? "admins" : role === "driver" ? "drivers" : "riders";
-      const account = db.findOne(table, (a) => a.phone === phone);
-      if (!account || !verifyPassword(password, account.passwordSalt, account.passwordHash)) {
-        return sendJson(res, 401, { error: "Incorrect phone number or password." });
+      let table, idField;
+      if (role === "admin") { table = "admins"; idField = "id"; }
+      else if (role === "driver") { table = "drivers"; idField = "id"; }
+      else { table = "riders"; idField = "id"; }
+
+      const result = await pool.query(`SELECT * FROM ${table} WHERE phone = $1`, [phone]);
+      const account = result.rows[0];
+      if (!account || !verifyPassword(password, account.password_salt, account.password_hash)) {
+        return sendJson(res, 401, { error: "Incorrect phone or password." });
       }
 
-      if (role === "driver" && account.status === "pending") {
-        return sendJson(res, 403, {
-          error: "Your driver application is still pending admin approval.",
-        });
-      }
-      if (role === "driver" && account.status === "rejected") {
-        return sendJson(res, 403, { error: "Your driver application was not approved. Contact support." });
+      if (role === "driver") {
+        if (account.status === "pending") {
+          return sendJson(res, 403, { error: "Your driver application is still pending approval." });
+        }
+        if (account.status === "rejected") {
+          return sendJson(res, 403, { error: "Your driver application was not approved." });
+        }
       }
 
-      const token = sign({ sub: account.id, role });
-      const publicUser =
-        role === "rider" ? publicRider(account) : role === "driver" ? publicDriver(account) : { id: account.id, name: account.name };
+      const token = sign({ sub: account[idField], role });
+      const publicUser = role === "rider" ? publicRider(account) :
+                         role === "driver" ? publicDriver(account) :
+                         { id: account.id, name: account.name };
       return sendJson(res, 200, { token, user: publicUser, role });
     })
   );
@@ -152,11 +152,18 @@ function register(router) {
     "/api/auth/me",
     requireAuth()(async (req, res) => {
       const { sub, role } = req.user;
-      const table = role === "admin" ? "admins" : role === "driver" ? "drivers" : "riders";
-      const account = db.findOne(table, (a) => a.id === sub);
+      let table;
+      if (role === "admin") table = "admins";
+      else if (role === "driver") table = "drivers";
+      else table = "riders";
+
+      const result = await pool.query(`SELECT * FROM ${table} WHERE id = $1`, [sub]);
+      const account = result.rows[0];
       if (!account) return sendJson(res, 404, { error: "Account not found." });
-      const publicUser =
-        role === "rider" ? publicRider(account) : role === "driver" ? publicDriver(account) : { id: account.id, name: account.name };
+
+      const publicUser = role === "rider" ? publicRider(account) :
+                         role === "driver" ? publicDriver(account) :
+                         { id: account.id, name: account.name };
       return sendJson(res, 200, { user: publicUser, role });
     })
   );
