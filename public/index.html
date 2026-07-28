@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Washi Rides</title>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="apple-touch-icon" href="/img/favicon-180.png">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="app">
+
+  <header class="app-header">
+    <div class="header-left">
+      <img src="/img/logo-icon-header.png" alt="Washi Rides" class="logo-mark">
+      <div>
+        <h1>Washi Rides</h1>
+        <p id="header-subtitle">Book a ride around Manyinga</p>
+      </div>
+    </div>
+    <div class="header-right" id="header-account" style="display:none;">
+      <div id="header-name"></div>
+      <span class="logout-link" id="logout-link">Log out</span>
+    </div>
+  </header>
+
+  <!-- AUTH SCREEN -->
+  <section class="screen active" id="screen-auth">
+    <div class="tabs">
+      <div class="tab active" data-auth-tab="login">Log in</div>
+      <div class="tab" data-auth-tab="register">Sign up</div>
+    </div>
+
+    <div class="card" id="login-form">
+      <h3>Welcome back</h3>
+      <label for="login-phone">Phone number</label>
+      <input type="tel" id="login-phone" placeholder="e.g. 0977123456">
+      <label for="login-password">Password</label>
+      <input type="password" id="login-password" placeholder="Your password">
+      <div class="error-text" id="login-error"></div>
+      <div style="margin-top:14px;">
+        <button class="btn" id="login-btn">Log in</button>
+      </div>
+    </div>
+
+    <div class="card" id="register-form" style="display:none;">
+      <h3>Create your account</h3>
+      <label for="reg-name">Full name</label>
+      <input type="text" id="reg-name" placeholder="e.g. Grace Mwansa">
+      <label for="reg-phone">Phone number</label>
+      <input type="tel" id="reg-phone" placeholder="e.g. 0977123456">
+      <label for="reg-password">Password</label>
+      <input type="password" id="reg-password" placeholder="At least 6 characters">
+      <div class="error-text" id="reg-error"></div>
+      <div style="margin-top:14px;">
+        <button class="btn" id="register-btn">Sign up</button>
+      </div>
+    </div>
+
+    <p class="auth-switch">Are you a rider? <a href="/driver.html">Register as a driver instead</a></p>
+  </section>
+
+  <!-- HOME / BOOK A RIDE -->
+  <section class="screen" id="screen-home">
+    <h2>Quick Book Shortcuts</h2>
+    <div class="shortcuts" id="shortcuts-list"></div>
+
+    <label for="pickup-input">Enter your pickup point</label>
+    <input type="text" id="pickup-input" placeholder="e.g. Tabora Market" list="places-datalist">
+    <label for="destination-input">Destination</label>
+    <input type="text" id="destination-input" placeholder="Tap a shortcut above or type here" list="places-datalist">
+    <datalist id="places-datalist"></datalist>
+
+    <div class="card" id="fare-estimate-card" style="margin-top:16px; display:none;">
+      <div class="muted">Estimated fare</div>
+      <div class="plan-price" id="fare-estimate-amount">K0.00</div>
+      <div class="muted" id="fare-estimate-detail"></div>
+    </div>
+
+    <div style="margin-top:20px;">
+      <button class="btn" id="proceed-btn">Proceed</button>
+    </div>
+  </section>
+
+  <!-- CHOOSE YOUR RIDER -->
+  <section class="screen" id="screen-riders">
+    <h2>Choose Your Rider</h2>
+    <div class="route-label" id="route-label-riders"></div>
+    <div class="stack" id="rider-list"></div>
+  </section>
+
+  <!-- WAITING / TRACKING -->
+  <section class="screen" id="screen-waiting">
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-num" id="stat-week">0</div>
+        <div class="stat-label">Trips this week</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stat-lifetime">0</div>
+        <div class="stat-label">Lifetime rides</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 id="waiting-message">Waiting for driver...</h3>
+      <div class="route-label" id="route-label-waiting"></div>
+
+      <div class="map-box">
+        <svg class="map-svg" viewBox="0 0 100 100" id="tracking-map">
+          <line id="route-line" x1="0" y1="0" x2="0" y2="0" stroke="#c9a8ef" stroke-width="1.5" stroke-dasharray="3,2"/>
+          <circle id="pickup-marker" r="2.4" fill="#9B4DCA"/>
+          <circle id="dest-marker" r="2.4" fill="#6A0DAD"/>
+          <circle id="driver-marker" r="2.8" fill="#2ECC71" stroke="#fff" stroke-width="0.6"/>
+        </svg>
+        <div class="map-legend">
+          <span><span class="legend-dot" style="background:#9B4DCA"></span> Pickup</span>
+          <span><span class="legend-dot" style="background:#6A0DAD"></span> Destination</span>
+          <span><span class="legend-dot" style="background:#2ECC71"></span> Driver</span>
+        </div>
+      </div>
+
+      <div id="timer-wrap" style="text-align:center;">
+        <div class="timer-circle" id="timer-display">55</div>
+        <div class="muted" id="tracking-status-label">Waiting for driver to accept...</div>
+      </div>
+
+      <div class="btn-row" style="margin-top:16px;">
+        <button class="btn secondary" id="cancel-btn">Cancel</button>
+        <button class="btn success" id="pay-now-btn" style="display:none;">Pay fare</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px; text-align:center;">
+      <h3>Contact Support</h3>
+      <div style="margin-top:12px;">
+        <button class="btn whatsapp" id="whatsapp-btn">Chat on WhatsApp</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- RIDE HISTORY -->
+  <section class="screen" id="screen-history">
+    <h2>Your Rides</h2>
+    <div class="stack" id="history-list"></div>
+  </section>
+
+  <!-- SUBSCRIPTIONS -->
+  <section class="screen" id="screen-subscribe">
+    <h2>Rider Plans</h2>
+    <div class="card" id="current-plan-card" style="display:none; margin-bottom:16px;">
+      <div class="muted">Your current plan</div>
+      <h3 id="current-plan-name"></h3>
+      <div class="muted" id="current-plan-expiry"></div>
+    </div>
+    <div class="stack" id="plans-list"></div>
+  </section>
+
+  <!-- ACCOUNT -->
+  <section class="screen" id="screen-account">
+    <h2>Account</h2>
+    <div class="card">
+      <div class="muted">Name</div>
+      <h3 id="account-name"></h3>
+      <div class="muted" style="margin-top:10px;">Phone number</div>
+      <div id="account-phone"></div>
+    </div>
+    <div class="card" style="margin-top:16px; text-align:center;">
+      <h3>Contact Support</h3>
+      <div style="margin-top:12px;">
+        <button class="btn whatsapp" id="whatsapp-btn-2">Chat on WhatsApp</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="spacer"></div>
+
+  <nav class="bottom-nav" id="bottom-nav" style="display:none;">
+    <button data-nav="home" class="active">Book</button>
+    <button data-nav="history">Rides</button>
+    <button data-nav="subscribe">Plans</button>
+    <button data-nav="account">Account</button>
+  </nav>
+
+  <footer class="app-footer">
+    <a href="#" id="footer-support-link">Contact Support</a>
+  </footer>
+</div>
+
+<!-- PAYMENT MODAL -->
+<div class="modal-overlay" id="payment-modal">
+  <div class="modal">
+    <h3 id="payment-modal-title">Pay with Mobile Money</h3>
+
+    <div id="payment-step-provider">
+      <label>Choose provider</label>
+      <div class="pill-row" id="provider-pills">
+        <div class="pill" data-provider="mtn">MTN Money</div>
+        <div class="pill" data-provider="airtel">Airtel Money</div>
+        <div class="pill" data-provider="zamtel">Zamtel Kwacha</div>
+      </div>
+      <label for="pay-phone">Mobile money number</label>
+      <input type="tel" id="pay-phone" placeholder="e.g. 0977123456">
+      <div class="muted" id="pay-amount-label" style="margin-top:10px;"></div>
+      <div class="error-text" id="pay-error"></div>
+      <div style="margin-top:14px;">
+        <button class="btn" id="pay-continue-btn">Request payment</button>
+      </div>
+    </div>
+
+    <div id="payment-step-pin" style="display:none;">
+      <p class="muted">Enter the 4-digit PIN sent to your phone to approve this payment.</p>
+      <label for="pay-pin">Mobile money PIN</label>
+      <input type="password" id="pay-pin" maxlength="4" placeholder="••••">
+      <div class="error-text" id="pin-error"></div>
+      <div style="margin-top:14px;">
+        <button class="btn success" id="pay-confirm-btn">Confirm payment</button>
+      </div>
+      <p class="muted" style="margin-top:10px;">This is a simulated payment for demo purposes - no real funds move.</p>
+    </div>
+
+    <div id="payment-step-success" style="display:none; text-align:center;">
+      <h3 style="color:#1c9955;">Payment successful</h3>
+      <p class="muted" id="payment-success-ref" style="margin-top:8px;"></p>
+      <div style="margin-top:16px;">
+        <button class="btn" id="payment-done-btn">Done</button>
+      </div>
+    </div>
+
+    <div class="modal-close" id="modal-close-btn">Close</div>
+  </div>
+</div>
+
+<script src="/js/shared.js"></script>
+<script src="/js/rider.js"></script>
+</body>
+</html>
