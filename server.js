@@ -10,7 +10,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ Serve static files from the "public" folder (MUST come before the catch‑all)
+// ✅ IMPORTANT: Serve static files from "public" BEFORE any routes
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ----- API Routes -----
@@ -28,8 +28,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/payments', paymentRoutes);
 
-// ----- Catch‑all: serve index.html for any other request (SPA support) -----
-// This MUST come after all API routes and static middleware.
+// ----- Catch‑all: serve index.html for any other request (SPA) -----
+// This MUST come after all API routes and static middleware!
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
