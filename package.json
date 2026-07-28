@@ -9,5 +9,21 @@
   "engines": {
     "node": ">=18"
   },
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "directories": {
+    "lib": "lib"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/richardchisenga/washi_rides.git"
+  },
+  "keywords": [],
+  "author": "",
+  "bugs": {
+    "url": "https://github.com/richardchisenga/washi_rides/issues"
+  },
+  "homepage": "https://github.com/richardchisenga/washi_rides#readme",
+  "dependencies": {
+    "pg": "^8.22.0"
+  }
 }
