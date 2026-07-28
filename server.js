@@ -1,17 +1,17 @@
 // server.js
-// Zero-dependency Node.js server for Washi Rides.
-// Serves the static frontend and a small JSON API, all from Node's built-in
-// http/fs modules - no npm install required.
-
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const { URL } = require("url");
 
 const { Router, sendJson } = require("./lib/router");
+const { initSchema } = require("./lib/schema");
 const { seed } = require("./lib/seed");
 
-seed();
+// Initialize database schema first, then seed
+initSchema().then(() => {
+  seed().catch(console.error);
+}).catch(console.error);
 
 const router = new Router();
 require("./routes/auth").register(router);
@@ -37,7 +37,6 @@ function serveStatic(req, res, pathname) {
   let filePath = pathname === "/" ? "/index.html" : pathname;
   filePath = path.join(PUBLIC_DIR, filePath);
 
-  // Prevent path traversal outside the public directory.
   if (!filePath.startsWith(PUBLIC_DIR)) {
     res.writeHead(403);
     return res.end("Forbidden");
