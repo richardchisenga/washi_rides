@@ -4,15 +4,24 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Washi Rides Pro</title>
+
+  <!-- Logo as favicon -->
+  <link rel="icon" href="https://i.imgur.com/NhGpBZa.png" type="image/png" />
+  <!-- PWA manifest (optional) -->
+  <link rel="manifest" href="/manifest.json" />
+
+  <!-- Leaflet for maps -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
   <style>
     /* ----- RESET & BASE ----- */
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
     body { background: #F5F0FF; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 0 0 70px 0; }
     #app { max-width: 420px; width: 100%; background: white; min-height: 100vh; box-shadow: 0 8px 30px rgba(106, 13, 173, 0.15); position: relative; padding-bottom: 70px; }
     .app-header { background: #6A0DAD; padding: 16px 18px 12px; color: white; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
-    .app-header h1 { font-size: 20px; font-weight: 700; letter-spacing: 0.5px; }
+    .app-header h1 { font-size: 20px; font-weight: 700; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px; }
+    .app-header h1 img { height: 32px; width: auto; display: inline-block; }
     .app-header .badge { font-size: 10px; background: rgba(255, 255, 255, 0.2); padding: 3px 10px; border-radius: 20px; }
     .page { display: none; padding: 16px 16px 20px; animation: fadeIn 0.25s ease; }
     .page.active { display: block; }
@@ -21,6 +30,7 @@
     .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 11px; color: #888; cursor: pointer; padding: 4px 12px; border-radius: 30px; transition: 0.2s; border: none; background: transparent; font-weight: 500; }
     .nav-item.active { color: #6A0DAD; background: #ede4ff; }
     .nav-item .nav-icon { font-size: 22px; line-height: 1; }
+    .nav-icon img { height: 22px; width: 22px; object-fit: contain; }
     .section-title { font-size: 18px; font-weight: 600; color: #3A1A4A; margin-bottom: 12px; }
     .purple-btn { background: #6A0DAD; color: white; border: none; padding: 12px 20px; border-radius: 40px; font-size: 15px; font-weight: 600; width: 100%; cursor: pointer; transition: 0.2s; text-align: center; }
     .purple-btn:active { background: #4f0a82; }
@@ -60,12 +70,21 @@
     .auth-section { padding: 30px 20px; }
     .auth-section h2 { margin-bottom: 16px; color: #3A1A4A; }
     .auth-section .input-group { margin-bottom: 12px; }
+    /* Fallback for missing logo */
+    .logo-fallback { display: none; }
+    img.logo-img:not([src]) + .logo-fallback { display: inline; }
+    img.logo-img[src=""] + .logo-fallback { display: inline; }
   </style>
 </head>
 <body>
 <div id="app">
+  <!-- HEADER with custom logo (Imgur URL) -->
   <header class="app-header">
-    <h1>🚗 Washi Rides</h1>
+    <h1>
+      <!-- ✅ Logo from Imgur -->
+      <img src="https://i.imgur.com/NhGpBZa.png" alt="Washi Rides" style="height: 32px; vertical-align: middle; margin-right: 8px;" />
+      Washi Rides
+    </h1>
     <span class="badge">Pro v2.0</span>
   </header>
 
@@ -157,7 +176,7 @@
       <div class="route-banner" id="trackingRoute">Ride in progress...</div>
       <div class="map-container" id="trackingMapContainer"></div>
       <div class="flex-between" style="margin-top:6px;">
-        <span id="trackingStatus" style="font-weight:600; color:#2b7a3e;">● Driver is on the way</span>
+        <span id="trackingStatus" style="font-weight:600; color:#2b7a3e;">🏍️ Driver is heading to you...</span>
         <span id="etaDisplay" style="color:#6A0DAD; font-weight:600;">ETA: 3 min</span>
       </div>
       <button class="purple-btn outline mt-16" id="endRideBtn">🏁 End Ride</button>
@@ -240,7 +259,7 @@
   <nav class="bottom-nav" id="bottomNav" style="display:none;">
     <button class="nav-item active" data-page="page-home"><span class="nav-icon">🏠</span> Home</button>
     <button class="nav-item" data-page="page-tracking"><span class="nav-icon">🗺️</span> Track</button>
-    <button class="nav-item" data-page="page-register"><span class="nav-icon">🚗</span> Register</button>
+    <button class="nav-item" data-page="page-register"><span class="nav-icon">🏍️</span> Register</button>
     <button class="nav-item" data-page="page-subscription"><span class="nav-icon">🌟</span> Subscribe</button>
     <button class="nav-item" data-page="page-admin"><span class="nav-icon">⚙️</span> Admin</button>
   </nav>
@@ -248,9 +267,7 @@
 
 <script>
   // ========================== CONFIG =============================
-  // 👇 CHANGE THIS NUMBER TO YOUR WHATSAPP NUMBER
   const WHATSAPP_NUMBER = '+260976638676';
-
   const API_BASE = '/api';
 
   // ========================== STATE ==============================
@@ -494,7 +511,7 @@
     mapInstance = L.map('trackingMapContainer').setView([-12.0, 28.5], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(mapInstance);
     userMarker = L.marker([-12.0, 28.5], { icon: L.icon({ iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png', iconSize: [25, 41], iconAnchor: [12, 41] }) }).addTo(mapInstance).bindPopup('📍 You');
-    driverMarker = L.marker([-12.0, 28.5], { icon: L.icon({ iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png', iconSize: [25, 41], iconAnchor: [12, 41] }) }).addTo(mapInstance).bindPopup('🚗 Driver');
+    driverMarker = L.marker([-12.0, 28.5], { icon: L.icon({ iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png', iconSize: [25, 41], iconAnchor: [12, 41] }) }).addTo(mapInstance).bindPopup('🏍️ Driver');
     if (navigator.geolocation) {
       navigator.geolocation.watchPosition(pos => {
         userLat = pos.coords.latitude; userLng = pos.coords.longitude;
@@ -507,7 +524,7 @@
   function startTrackingRide(pickup, dest, driver) {
     rideActive = true;
     document.getElementById('trackingRoute').textContent = `${pickup} → ${dest} | Driver: ${driver.name}`;
-    document.getElementById('trackingStatus').textContent = '🚗 Driver is heading to you...';
+    document.getElementById('trackingStatus').textContent = '🏍️ Driver is heading to you...';
     document.getElementById('etaDisplay').textContent = 'ETA: 3 min';
     showPage('page-tracking');
     if (!mapInitialized) initMap();
