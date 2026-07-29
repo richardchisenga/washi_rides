@@ -1,15 +1,16 @@
 {
   "name": "washi-rides",
   "version": "1.0.0",
-  ...
+  "description": "Washi Rides - ride booking app with live tracking, mobile money payments, driver registration, admin panel and rider subscriptions.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
   "engines": {
     "node": ">=18"
   },
-<<<<<<< HEAD
-  "license": "UNLICENSED"
-=======
+  "license": "UNLICENSED",
   "dependencies": {
     "pg": "^8.12.0"
   }
->>>>>>> some-commit-hash
 }
