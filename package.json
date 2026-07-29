@@ -1,33 +1,15 @@
 {
   "name": "washi-rides",
   "version": "1.0.0",
-  "description": "Washi Rides - ride booking app with live tracking, mobile money payments, driver registration, admin panel and rider subscriptions. Zero external dependencies.",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js"
-  },
+  ...
   "engines": {
     "node": ">=18"
   },
 <<<<<<< HEAD
-  "license": "UNLICENSED",
-  "directories": {
-    "lib": "lib"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/richardchisenga/washi_rides.git"
-  },
-  "keywords": [],
-  "author": "",
-  "bugs": {
-    "url": "https://github.com/richardchisenga/washi_rides/issues"
-  },
-  "homepage": "https://github.com/richardchisenga/washi_rides#readme",
-  "dependencies": {
-    "pg": "^8.22.0"
-  }
-=======
   "license": "UNLICENSED"
->>>>>>> d2625106d9f91f3aef43ba7d1d4d4ebdd61c8264
+=======
+  "dependencies": {
+    "pg": "^8.12.0"
+  }
+>>>>>>> some-commit-hash
 }
