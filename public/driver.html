@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Washi Rides - Driver</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="app">
+
+  <header class="app-header">
+    <div>
+      <h1>Washi Rides</h1>
+      <p>Driver app</p>
+    </div>
+    <div class="header-right" id="header-account" style="display:none;">
+      <div id="header-name"></div>
+      <span class="logout-link" id="logout-link">Log out</span>
+    </div>
+  </header>
+
+  <!-- AUTH SCREEN -->
+  <section class="screen active" id="screen-auth">
+    <div class="tabs">
+      <div class="tab active" data-auth-tab="login">Log in</div>
+      <div class="tab" data-auth-tab="register">Apply to drive</div>
+    </div>
+
+    <div class="card" id="login-form">
+      <h3>Welcome back</h3>
+      <label for="login-phone">Phone number</label>
+      <input type="tel" id="login-phone" placeholder="e.g. 0966123456">
+      <label for="login-password">Password</label>
+      <input type="password" id="login-password" placeholder="Your password">
+      <div class="error-text" id="login-error"></div>
+      <div style="margin-top:14px;">
+        <button class="btn" id="login-btn">Log in</button>
+      </div>
+    </div>
+
+    <div class="card" id="register-form" style="display:none;">
+      <h3>Driver application</h3>
+      <label for="reg-name">Full name</label>
+      <input type="text" id="reg-name" placeholder="e.g. Felix Chikondo">
+      <label for="reg-phone">Phone number</label>
+      <input type="tel" id="reg-phone" placeholder="e.g. 0966123456">
+      <label for="reg-password">Password</label>
+      <input type="password" id="reg-password" placeholder="At least 6 characters">
+      <label for="reg-license">Driving license number</label>
+      <input type="text" id="reg-license" placeholder="e.g. LIC-00123">
+
+      <h3 style="margin-top:18px;">Your bike</h3>
+      <label for="reg-bike-plate">Number plate</label>
+      <input type="text" id="reg-bike-plate" placeholder="e.g. ABC 123">
+      <label for="reg-bike-model">Model</label>
+      <input type="text" id="reg-bike-model" placeholder="e.g. Honda">
+      <label for="reg-bike-color">Colour</label>
+      <input type="text" id="reg-bike-color" placeholder="e.g. Red">
+
+      <div class="error-text" id="reg-error"></div>
+      <div class="success-text" id="reg-success"></div>
+      <div style="margin-top:14px;">
+        <button class="btn" id="register-btn">Submit application</button>
+      </div>
+    </div>
+
+    <p class="auth-switch">Looking to book a ride? <a href="/index.html">Go to the rider app</a></p>
+  </section>
+
+  <!-- PENDING APPROVAL -->
+  <section class="screen" id="screen-pending">
+    <div class="card" style="text-align:center; margin-top:40px;">
+      <h3>Application under review</h3>
+      <p class="muted" style="margin-top:10px;">An admin needs to approve your driver profile before you can go online. Check back soon.</p>
+    </div>
+  </section>
+
+  <!-- DASHBOARD -->
+  <section class="screen" id="screen-dashboard">
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div class="muted">Status</div>
+          <h3 id="online-status-label">Offline</h3>
+        </div>
+        <label class="switch-wrap" style="display:flex; align-items:center; gap:8px;">
+          <input type="checkbox" id="online-toggle" style="width:20px; height:20px;">
+          <span class="muted">Go online</span>
+        </label>
+      </div>
+      <div class="muted" style="margin-top:10px;" id="bike-info"></div>
+    </div>
+
+    <h2 style="margin-top:20px;">Ride Requests</h2>
+    <div class="stack" id="rides-list"></div>
+  </section>
+
+  <div class="spacer"></div>
+
+  <footer class="app-footer">
+    <a href="#" id="footer-support-link">Contact Support</a>
+  </footer>
+</div>
+
+<script src="/js/shared.js"></script>
+<script src="/js/driver.js"></script>
+</body>
+</html>

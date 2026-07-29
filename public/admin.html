@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Washi Rides - Admin</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="app" class="wide">
+
+  <header class="app-header">
+    <div>
+      <h1>Washi Rides</h1>
+      <p>Admin panel</p>
+    </div>
+    <div class="header-right" id="header-account" style="display:none;">
+      <div id="header-name"></div>
+      <span class="logout-link" id="logout-link">Log out</span>
+    </div>
+  </header>
+
+  <!-- AUTH SCREEN -->
+  <section class="screen active" id="screen-auth">
+    <div class="card" style="max-width:360px; margin:0 auto;">
+      <h3>Admin login</h3>
+      <label for="login-phone">Username</label>
+      <input type="text" id="login-phone" placeholder="admin">
+      <label for="login-password">Password</label>
+      <input type="password" id="login-password" placeholder="Your password">
+      <div class="error-text" id="login-error"></div>
+      <div style="margin-top:14px;">
+        <button class="btn" id="login-btn">Log in</button>
+      </div>
+      <p class="muted" style="margin-top:12px;">Default seed login: username <strong>admin</strong>, password <strong>admin123</strong> - change it after first use.</p>
+    </div>
+  </section>
+
+  <!-- DASHBOARD -->
+  <section class="screen" id="screen-dashboard">
+    <div class="tabs">
+      <div class="tab active" data-tab="overview">Overview</div>
+      <div class="tab" data-tab="drivers">Drivers</div>
+      <div class="tab" data-tab="bikes">Bikes</div>
+      <div class="tab" data-tab="riders">Riders</div>
+      <div class="tab" data-tab="rides">Rides</div>
+      <div class="tab" data-tab="plans">Subscription Plans</div>
+    </div>
+
+    <!-- OVERVIEW -->
+    <div class="tab-panel active" id="panel-overview">
+      <div class="stat-grid" style="flex-wrap:wrap;">
+        <div class="stat-card"><div class="stat-num" id="stat-riders">0</div><div class="stat-label">Riders</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-drivers">0</div><div class="stat-label">Drivers</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-pending">0</div><div class="stat-label">Pending approvals</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-online">0</div><div class="stat-label">Online now</div></div>
+      </div>
+      <div class="stat-grid" style="flex-wrap:wrap;">
+        <div class="stat-card"><div class="stat-num" id="stat-rides-today">0</div><div class="stat-label">Rides today</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-rides-total">0</div><div class="stat-label">Total rides</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-revenue">K0</div><div class="stat-label">Revenue collected</div></div>
+      </div>
+    </div>
+
+    <!-- DRIVERS -->
+    <div class="tab-panel" id="panel-drivers" style="display:none;">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Phone</th><th>Bike</th><th>Status</th><th>Online</th><th>Actions</th></tr></thead>
+          <tbody id="drivers-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- BIKES -->
+    <div class="tab-panel" id="panel-bikes" style="display:none;">
+      <div class="card" style="margin-bottom:16px;">
+        <h3>Add a bike</h3>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
+          <input type="text" id="new-bike-plate" placeholder="Plate number" style="flex:1; min-width:140px;">
+          <input type="text" id="new-bike-model" placeholder="Model" style="flex:1; min-width:140px;">
+          <input type="text" id="new-bike-color" placeholder="Colour" style="flex:1; min-width:120px;">
+          <button class="btn small" id="add-bike-btn" style="flex:0 0 auto;">Add bike</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Plate</th><th>Model</th><th>Colour</th><th>Assigned to</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="bikes-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RIDERS -->
+    <div class="tab-panel" id="panel-riders" style="display:none;">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Phone</th><th>Joined</th><th>Plan</th></tr></thead>
+          <tbody id="riders-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RIDES -->
+    <div class="tab-panel" id="panel-rides" style="display:none;">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Route</th><th>Rider</th><th>Driver</th><th>Fare</th><th>Status</th><th>When</th></tr></thead>
+          <tbody id="rides-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PLANS -->
+    <div class="tab-panel" id="panel-plans" style="display:none;">
+      <div class="stack" id="plans-list"></div>
+    </div>
+  </section>
+
+  <div class="spacer"></div>
+  <footer class="app-footer">Washi Rides admin panel</footer>
+</div>
+
+<!-- Edit bike modal -->
+<div class="modal-overlay" id="bike-modal">
+  <div class="modal">
+    <h3>Edit bike</h3>
+    <label for="edit-bike-plate">Plate number</label>
+    <input type="text" id="edit-bike-plate">
+    <label for="edit-bike-model">Model</label>
+    <input type="text" id="edit-bike-model">
+    <label for="edit-bike-color">Colour</label>
+    <input type="text" id="edit-bike-color">
+    <label for="edit-bike-driver">Assigned driver</label>
+    <select id="edit-bike-driver"></select>
+    <div style="margin-top:14px;">
+      <button class="btn" id="save-bike-btn">Save changes</button>
+    </div>
+    <div class="modal-close" id="close-bike-modal">Close</div>
+  </div>
+</div>
+
+<!-- Edit plan modal -->
+<div class="modal-overlay" id="plan-modal">
+  <div class="modal">
+    <h3>Edit plan</h3>
+    <label for="edit-plan-name">Name</label>
+    <input type="text" id="edit-plan-name">
+    <label for="edit-plan-price">Price (Kwacha)</label>
+    <input type="text" id="edit-plan-price">
+    <label for="edit-plan-duration">Duration (days)</label>
+    <input type="text" id="edit-plan-duration">
+    <label for="edit-plan-discount">Discount (%)</label>
+    <input type="text" id="edit-plan-discount">
+    <label for="edit-plan-perks">Perks (one per line)</label>
+    <textarea id="edit-plan-perks" rows="4"></textarea>
+    <div style="margin-top:14px;">
+      <button class="btn" id="save-plan-btn">Save changes</button>
+    </div>
+    <div class="modal-close" id="close-plan-modal">Close</div>
+  </div>
+</div>
+
+<script src="/js/shared.js"></script>
+<script src="/js/admin.js"></script>
+</body>
+</html>
