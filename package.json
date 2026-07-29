@@ -9,6 +9,7 @@
   "engines": {
     "node": ">=18"
   },
+<<<<<<< HEAD
   "license": "UNLICENSED",
   "directories": {
     "lib": "lib"
@@ -26,4 +27,7 @@
   "dependencies": {
     "pg": "^8.22.0"
   }
+=======
+  "license": "UNLICENSED"
+>>>>>>> d2625106d9f91f3aef43ba7d1d4d4ebdd61c8264
 }

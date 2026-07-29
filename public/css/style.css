@@ -44,8 +44,11 @@ header.app-header{
 }
 header.app-header h1{ font-size:1.5rem; letter-spacing:0.3px; }
 header.app-header p{ font-size:0.8rem; opacity:0.85; margin-top:4px; }
+<<<<<<< HEAD
 .header-left{ display:flex; align-items:center; gap:12px; }
 .logo-mark{ width:44px; height:auto; flex:0 0 auto; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.25)); }
+=======
+>>>>>>> d2625106d9f91f3aef43ba7d1d4d4ebdd61c8264
 .header-right{ text-align:right; font-size:0.8rem; }
 .logout-link{ color:#fff; opacity:0.85; text-decoration:underline; cursor:pointer; font-size:0.78rem; }
 
